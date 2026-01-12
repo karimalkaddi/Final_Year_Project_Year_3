@@ -1,87 +1,58 @@
-import { useState } from "react";
+import { useState } from 'react';
+import { addExpense } from '../api/expenseApi';
 
 function AddExpense() {
-  const [amount, setAmount] = useState("");
-  const [category, setCategory] = useState("");
-  const [description, setDescription] = useState("");
-  const [date, setDate] = useState("");
+  const [amount, setAmount] = useState('');
+  const [category, setCategory] = useState('');
+  const [description, setDescription] = useState('');
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const expenseData = {
+    const expense = {
       amount,
       category,
-      description,
-      date,
+      description
     };
 
-    console.log("Expense submitted:", expenseData);
-
-    // clear form
-    setAmount("");
-    setCategory("");
-    setDescription("");
-    setDate("");
+    try {
+      await addExpense(expense);
+      alert('Expense added successfully!');
+      setAmount('');
+      setCategory('');
+      setDescription('');
+    } catch (error) {
+      console.error(error);
+      alert('Failed to add expense');
+    }
   };
 
   return (
-    <div style={{ padding: "20px" }}>
+    <div>
       <h2>Add Expense</h2>
-
       <form onSubmit={handleSubmit}>
-        <div>
-          <label>Amount (£)</label><br />
-          <input
-            type="number"
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-            required
-          />
-        </div>
+        <input
+          type="number"
+          placeholder="Amount"
+          value={amount}
+          onChange={(e) => setAmount(e.target.value)}
+          required
+        />
 
-        <br />
+        <input
+          type="text"
+          placeholder="Category"
+          value={category}
+          onChange={(e) => setCategory(e.target.value)}
+          required
+        />
 
-        <div>
-          <label>Category</label><br />
-          <select
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}
-            required
-          >
-            <option value="">Select category</option>
-            <option value="Food">Food</option>
-            <option value="Transport">Transport</option>
-            <option value="Rent">Rent</option>
-            <option value="Entertainment">Entertainment</option>
-            <option value="Other">Other</option>
-          </select>
-        </div>
-
-        <br />
-
-        <div>
-          <label>Description</label><br />
-          <input
-            type="text"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-          />
-        </div>
-
-        <br />
-
-        <div>
-          <label>Date</label><br />
-          <input
-            type="date"
-            value={date}
-            onChange={(e) => setDate(e.target.value)}
-            required
-          />
-        </div>
-
-        <br />
+        <input
+          type="text"
+          placeholder="Description"
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+        />
 
         <button type="submit">Add Expense</button>
       </form>
