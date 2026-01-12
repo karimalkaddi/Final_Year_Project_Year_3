@@ -1,25 +1,45 @@
-import { useEffect, useState } from 'react';
-import { getExpenses } from '../api/expenseApi';
+import { useEffect, useState } from "react";
 
 function Transactions() {
-  const [expenses, setExpenses] = useState([]);
+  const [transactions, setTransactions] = useState([]);
 
   useEffect(() => {
-    getExpenses().then((res) => {
-      setExpenses(res.data);
-    });
+    fetchTransactions();
   }, []);
+
+  const fetchTransactions = async () => {
+    const res = await fetch("http://localhost:5000/api/expenses");
+    const data = await res.json();
+    setTransactions(data);
+  };
 
   return (
     <div>
       <h2>Transactions</h2>
-      <ul>
-        {expenses.map((expense) => (
-          <li key={expense._id}>
-            £{expense.amount} - {expense.category} ({expense.description})
-          </li>
-        ))}
-      </ul>
+
+      {transactions.length === 0 ? (
+        <p>No transactions yet.</p>
+      ) : (
+        <table border="1" cellPadding="10">
+          <thead>
+            <tr>
+              <th>Title</th>
+              <th>Amount (£)</th>
+              <th>Category</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {transactions.map((item) => (
+              <tr key={item._id}>
+                <td>{item.title}</td>
+                <td>{item.amount}</td>
+                <td>{item.category || "Auto"}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
     </div>
   );
 }

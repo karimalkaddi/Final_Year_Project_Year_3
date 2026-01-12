@@ -1,19 +1,27 @@
 const express = require('express');
 const router = express.Router();
-const Expense = require('../models/Expense');
+const Expense = require("../models/Expense");
+const categoriseExpense = require("../utils/categoriseExpense");
 
-/**
- * POST: Add new expense
- */
-router.post('/', async (req, res) => {
+router.post("/", async (req, res) => {
   try {
-    const expense = new Expense(req.body);
-    const savedExpense = await expense.save();
-    res.status(201).json(savedExpense);
-  } catch (error) {
-    res.status(400).json({ error: error.message });
+    const { title, amount } = req.body;
+
+    const category = categoriseExpense(title);
+
+    const expense = new Expense({
+      title,
+      amount,
+      category
+    });
+
+    await expense.save();
+    res.json(expense);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to add expense" });
   }
 });
+
 
 /**
  * GET: Get all expenses
