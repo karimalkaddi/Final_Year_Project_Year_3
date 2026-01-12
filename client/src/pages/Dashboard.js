@@ -1,46 +1,77 @@
-import { useEffect, useState } from 'react';
-import { getExpenses } from '../api/expenseApi';
+import React, { useEffect, useState } from "react";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  CartesianGrid,
+  ResponsiveContainer
+} from "recharts";
 
 function Dashboard() {
   const [expenses, setExpenses] = useState([]);
-  const [total, setTotal] = useState(0);
 
+  // Fetch expenses from backend
   useEffect(() => {
-    getExpenses().then((res) => {
-      const data = res.data;
-      setExpenses(data);
-
-      // Total spending
-      const sum = data.reduce(
-        (acc, expense) => acc + Number(expense.amount),
-        0
-      );
-      setTotal(sum);
-    });
+    fetch("http://localhost:5000/api/expenses")
+      .then((res) => res.json())
+      .then((data) => setExpenses(data))
+      .catch((err) => console.error("Error fetching expenses:", err));
   }, []);
 
-  // Category totals (THIS GOES HERE)
-  const categoryTotals = expenses.reduce((acc, expense) => {
-    acc[expense.category] =
-      (acc[expense.category] || 0) + Number(expense.amount);
-    return acc;
-  }, {});
+  // Convert expenses into category totals for chart
+  const getCategoryTotals = () => {
+    const totals = {};
+
+    expenses.forEach((expense) => {
+      const category = expense.category;
+      const amount = Number(expense.amount);
+
+      if (!totals[category]) {
+        totals[category] = 0;
+      }
+
+      totals[category] += amount;
+    });
+
+    return Object.keys(totals).map((key) => ({
+      category: key,
+      total: totals[key],
+    }));
+  };
+
+  const categoryData = getCategoryTotals();
+
+  // Calculate total spending
+  const totalSpending = expenses.reduce(
+    (sum, expense) => sum + Number(expense.amount),
+    0
+  );
 
   return (
-    <div>
-      <h2>Dashboard</h2>
+    <div style={{ padding: "20px" }}>
+      <h1>Dashboard</h1>
 
-      <p><strong>Total Spending:</strong> £{total}</p>
-      <p><strong>Number of Transactions:</strong> {expenses.length}</p>
+      <p>
+        <strong>Total Expenses:</strong> £{totalSpending.toFixed(2)}
+      </p>
 
-      <h3>Spending by Category</h3>
-      <ul>
-        {Object.entries(categoryTotals).map(([category, amount]) => (
-          <li key={category}>
-            {category}: £{amount}
-          </li>
-        ))}
-      </ul>
+      <h2>Spending by Category</h2>
+
+      {categoryData.length === 0 ? (
+        <p>No expenses recorded yet.</p>
+      ) : (
+        <ResponsiveContainer width="100%" height={300}>
+          <BarChart data={categoryData}>
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis dataKey="category" />
+            <YAxis />
+            <Tooltip />
+            <Bar dataKey="total" />
+          </BarChart>
+        </ResponsiveContainer>
+      )}
     </div>
   );
 }
