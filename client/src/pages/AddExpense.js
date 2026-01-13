@@ -8,57 +8,60 @@ function AddExpense() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const expenseData = {
-      title,
-      amount,
-      category: category || null // 👈 null triggers auto-categorisation
+    const expense = {
+      title: title.trim(),
+      amount: Number(amount),
+      category: category || undefined,
     };
 
     const res = await fetch("http://localhost:5000/api/expenses", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(expenseData)
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(expense),
     });
 
-    if (res.ok) {
-      alert("Expense added successfully");
-      setTitle("");
-      setAmount("");
-      setCategory("");
+    if (!res.ok) {
+      const error = await res.text();
+      console.error("Failed to add expense:", error);
+      return;
     }
+
+    setTitle("");
+    setAmount("");
+    setCategory("");
   };
 
   return (
-    <div>
+    <form onSubmit={handleSubmit}>
       <h2>Add Expense</h2>
 
-      <form onSubmit={handleSubmit}>
-        <input
-          type="text"
-          placeholder="Expense name"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          required
-        />
+      <input
+        type="text"
+        placeholder="Expense name"
+        value={title}
+        onChange={(e) => setTitle(e.target.value)}
+        required
+      />
 
-        <input
-          type="number"
-          placeholder="Amount (£)"
-          value={amount}
-          onChange={(e) => setAmount(e.target.value)}
-          required
-        />
+      <input
+        type="number"
+        placeholder="Amount (£)"
+        value={amount}
+        onChange={(e) => setAmount(e.target.value)}
+        required
+      />
 
-        <input
-          type="text"
-          placeholder="Category (optional)"
-          value={category}
-          onChange={(e) => setCategory(e.target.value)}
-        />
+      <input
+        type="text"
+        placeholder="Category (optional)"
+        value={category}
+        onChange={(e) => setCategory(e.target.value)}
+      />
 
-        <button type="submit">Add Expense</button>
-      </form>
-    </div>
+      <button type="submit">Add Expense</button>
+    </form>
   );
 }
 
