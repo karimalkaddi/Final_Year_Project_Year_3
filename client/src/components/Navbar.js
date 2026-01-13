@@ -1,11 +1,19 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 function Navbar() {
+  const navigate = useNavigate();
+
+  const logout = () => {
+    localStorage.removeItem("token");
+    navigate("/login");
+  };
+
   return (
-    <nav style={{ padding: "10px", borderBottom: "1px solid #ccc" }}>
-      <Link to="/" style={{ marginRight: "10px" }}>Dashboard</Link>
-      <Link to="/add-expense" style={{ marginRight: "10px" }}>Add Expense</Link>
-      <Link to="/transactions">Transactions</Link>
+    <nav style={{ marginBottom: "20px" }}>
+      <Link to="/dashboard">Dashboard</Link>{" | "}
+      <Link to="/add-expense">Add Expense</Link>{" | "}
+      <Link to="/transactions">Transactions</Link>{" | "}
+      <button onClick={logout}>Logout</button>
     </nav>
   );
 }

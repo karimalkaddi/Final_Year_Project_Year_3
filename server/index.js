@@ -1,3 +1,4 @@
+import authRoutes from "./routes/auth.js";
 import express from "express";
 import mongoose from "mongoose";
 import cors from "cors";
@@ -13,6 +14,7 @@ app.use(express.json());
 
 // Routes
 app.use("/api/expenses", expenseRoutes);
+app.use("/api/auth", authRoutes);
 app.use("/api/predictions", predictionRoutes);
 
 // MongoDB connection
