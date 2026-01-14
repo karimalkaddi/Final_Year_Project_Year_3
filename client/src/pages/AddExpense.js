@@ -5,8 +5,15 @@ function AddExpense() {
   const [amount, setAmount] = useState("");
   const [category, setCategory] = useState("");
 
+  const token = localStorage.getItem("token");
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (!token) {
+      alert("You are not logged in");
+      return;
+    }
 
     const expense = {
       title: title.trim(),
@@ -14,23 +21,30 @@ function AddExpense() {
       category: category || undefined,
     };
 
-    const res = await fetch("http://localhost:5000/api/expenses", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(expense),
-    });
+    try {
+      const res = await fetch("http://localhost:5000/api/expenses", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`, // ✅ THIS WAS MISSING
+        },
+        body: JSON.stringify(expense),
+      });
 
-    if (!res.ok) {
-      const error = await res.text();
-      console.error("Failed to add expense:", error);
-      return;
+      const data = await res.json();
+
+      if (!res.ok) {
+        console.error("Failed to add expense:", data);
+        alert(data.message || "Failed to add expense");
+        return;
+      }
+
+      setTitle("");
+      setAmount("");
+      setCategory("");
+    } catch (err) {
+      console.error("Request failed:", err);
     }
-
-    setTitle("");
-    setAmount("");
-    setCategory("");
   };
 
   return (

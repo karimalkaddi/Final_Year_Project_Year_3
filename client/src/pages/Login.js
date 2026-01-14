@@ -29,8 +29,8 @@ function Login() {
 
       // ✅ SAVE TOKEN
       localStorage.setItem("token", data.token);
+      localStorage.setItem("user", JSON.stringify(data.user));
 
-      // ✅ REDIRECT TO DASHBOARD
       navigate("/dashboard");
     } catch (err) {
       setError("Server error");
@@ -38,33 +38,35 @@ function Login() {
   };
 
   return (
-    <form onSubmit={handleSubmit}>
+    <div style={{ padding: "20px" }}>
       <h2>Login</h2>
 
       {error && <p style={{ color: "red" }}>{error}</p>}
 
-      <input
-        type="email"
-        placeholder="Email"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        required
-      />
+      <form onSubmit={handleSubmit}>
+        <input
+          type="email"
+          placeholder="Email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+        />
 
-      <input
-        type="password"
-        placeholder="Password"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-        required
-      />
+        <input
+          type="password"
+          placeholder="Password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+        />
 
-      <button type="submit">Login</button>
+        <button type="submit">Login</button>
+      </form>
 
       <p>
         Don’t have an account? <Link to="/register">Register here</Link>
       </p>
-    </form>
+    </div>
   );
 }
 

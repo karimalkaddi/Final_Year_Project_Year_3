@@ -1,15 +1,18 @@
 import express from "express";
 import Expense from "../models/Expense.js";
 import { trainClassifier, categoriseExpense } from "../ml/categoriser.js";
+import authMiddleware from "../middleware/auth.js";
 
 const router = express.Router();
 
 /**
- * GET all expenses
+ * GET all expenses for logged-in user
  */
-router.get("/", async (req, res) => {
+router.get("/", authMiddleware, async (req, res) => {
   try {
-    const expenses = await Expense.find().sort({ date: -1 });
+    const expenses = await Expense.find({ user: req.user.id }).sort({
+      date: -1,
+    });
     res.json(expenses);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -17,19 +20,22 @@ router.get("/", async (req, res) => {
 });
 
 /**
- * ADD new expense
+ * ADD new expense (linked to user)
  */
-router.post("/", async (req, res) => {
+router.post("/", authMiddleware, async (req, res) => {
   try {
     const { title, amount, category } = req.body;
 
-    // Fetch historical data for training
-    const expenses = await Expense.find();
-    trainClassifier(expenses);
+    if (!title || !amount) {
+      return res.status(400).json({ message: "Title and amount required" });
+    }
 
-    // Decide category
+    // 🔹 Train classifier ONLY on this user's data
+    const userExpenses = await Expense.find({ user: req.user.id });
+    trainClassifier(userExpenses);
+
     const finalCategory =
-      category && category !== ""
+      category && category.trim() !== ""
         ? category
         : categoriseExpense(title);
 
@@ -37,7 +43,8 @@ router.post("/", async (req, res) => {
       title,
       amount,
       category: finalCategory,
-      date: new Date()
+      user: req.user.id, // ✅ CRITICAL FIX
+      date: new Date(),
     });
 
     await expense.save();

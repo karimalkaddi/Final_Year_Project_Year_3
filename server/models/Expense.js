@@ -1,21 +1,34 @@
-const mongoose = require('mongoose');
+import mongoose from "mongoose";
 
-const ExpenseSchema = new mongoose.Schema({
+const expenseSchema = new mongoose.Schema({
+  title: {
+    type: String,
+    required: true,
+    trim: true,
+  },
+
   amount: {
     type: Number,
-    required: true
+    required: true,
   },
+
   category: {
     type: String,
-    required: true
+    required: true,
+    default: "other",
   },
-  description: {
-    type: String
+
+  // ✅ LINK EXPENSE TO LOGGED-IN USER
+  user: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+    required: true,
   },
+
   date: {
     type: Date,
-    default: Date.now
-  }
+    default: Date.now,
+  },
 });
 
-module.exports = mongoose.model('Expense', ExpenseSchema);
+export default mongoose.model("Expense", expenseSchema);

@@ -1,30 +1,49 @@
 import express from "express";
 import Expense from "../models/Expense.js";
-import { predictSpending } from "../ml/forecast.js";
+import auth from "../middleware/auth.js";
 
 const router = express.Router();
 
-router.get("/", async (req, res) => {
-  const expenses = await Expense.find().sort({ date: 1 });
+router.get("/", auth, async (req, res) => {
+  try {
+    // ✅ ONLY THIS USER'S EXPENSES
+    const expenses = await Expense.find({ user: req.user.id }).sort({
+      date: 1,
+    });
 
-  const dailyTotals = {};
-  expenses.forEach((e) => {
-    const day = e.date.toISOString().slice(0, 10);
-    dailyTotals[day] = (dailyTotals[day] || 0) + e.amount;
-  });
+    if (expenses.length === 0) {
+      return res.json({
+        history: [],
+        prediction: [],
+      });
+    }
 
-  const values = Object.values(dailyTotals);
-  const avgDailySpend =
-    values.reduce((a, b) => a + b, 0) / values.length || 0;
+    // -------------------------
+    // Build daily totals
+    // -------------------------
+    const dailyTotals = {};
+    expenses.forEach((e) => {
+      const day = new Date(e.date).toISOString().split("T")[0];
+      dailyTotals[day] = (dailyTotals[day] || 0) + e.amount;
+    });
 
-  const history = values.slice(-7);
-  const prediction = Array(7).fill(avgDailySpend);
+    const history = Object.values(dailyTotals);
 
-  res.json({
-    history,
-    prediction,
-  });
+    // -------------------------
+    // Simple forecast (average)
+    // -------------------------
+    const avg =
+      history.reduce((a, b) => a + b, 0) / history.length;
+
+    const prediction = Array(7).fill(Number(avg.toFixed(2)));
+
+    res.json({
+      history,
+      prediction,
+    });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
 });
-
 
 export default router;

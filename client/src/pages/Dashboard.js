@@ -15,19 +15,30 @@ function Dashboard() {
   const [expenses, setExpenses] = useState([]);
   const [prediction, setPrediction] = useState(null);
 
+  const token = localStorage.getItem("token");
+
   useEffect(() => {
+    // ✅ CLEAR OLD USER DATA FIRST
+    setExpenses([]);
+    setPrediction(null);
+
     fetchExpenses();
     fetchPrediction();
-  }, []);
+  }, [token]); // 👈 reruns when user changes
 
   // --------------------
   // Fetch expenses
   // --------------------
   const fetchExpenses = async () => {
     try {
-      const res = await fetch("http://localhost:5000/api/expenses");
+      const res = await fetch("http://localhost:5000/api/expenses", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
       const data = await res.json();
-      setExpenses(data);
+      setExpenses(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error("Failed to fetch expenses", err);
     }
@@ -38,7 +49,12 @@ function Dashboard() {
   // --------------------
   const fetchPrediction = async () => {
     try {
-      const res = await fetch("http://localhost:5000/api/predictions");
+      const res = await fetch("http://localhost:5000/api/predictions", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
       const data = await res.json();
       setPrediction(data);
     } catch (err) {
@@ -47,7 +63,7 @@ function Dashboard() {
   };
 
   // --------------------
-  // Category totals (Bar Chart)
+  // Category totals
   // --------------------
   const categoryTotals = {};
   expenses.forEach((e) => {
@@ -61,18 +77,18 @@ function Dashboard() {
   }));
 
   // --------------------
-  // Forecast data (Line Chart)
+  // Forecast chart data
   // --------------------
   const forecastData =
     prediction &&
     [
-      ...prediction.history.map((value, index) => ({
-        day: `Past ${prediction.history.length - index}`,
-        amount: value,
+      ...prediction.history.map((v, i) => ({
+        day: `Past ${prediction.history.length - i}`,
+        amount: v,
       })),
-      ...prediction.prediction.map((value, index) => ({
-        day: `Day ${index + 1}`,
-        amount: value,
+      ...prediction.prediction.map((v, i) => ({
+        day: `Day ${i + 1}`,
+        amount: v,
       })),
     ];
 
@@ -80,7 +96,7 @@ function Dashboard() {
     <div style={{ padding: "20px" }}>
       <h1>Dashboard</h1>
 
-      {/* ================= Bar Chart ================= */}
+      {/* BAR CHART */}
       <h2>Spending by Category</h2>
       {barData.length === 0 ? (
         <p>No expenses recorded yet.</p>
@@ -95,7 +111,7 @@ function Dashboard() {
         </ResponsiveContainer>
       )}
 
-      {/* ================= Forecast ================= */}
+      {/* LINE CHART */}
       {prediction && (
         <>
           <h2 style={{ marginTop: "40px" }}>

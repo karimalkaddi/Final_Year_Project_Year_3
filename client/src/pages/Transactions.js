@@ -2,43 +2,47 @@ import { useEffect, useState } from "react";
 
 function Transactions() {
   const [transactions, setTransactions] = useState([]);
+  const token = localStorage.getItem("token");
 
   useEffect(() => {
     fetchTransactions();
   }, []);
 
   const fetchTransactions = async () => {
-    const res = await fetch("http://localhost:5000/api/expenses");
-    const data = await res.json();
-    setTransactions(data);
+    try {
+      const res = await fetch("http://localhost:5000/api/expenses", {
+        headers: {
+          Authorization: `Bearer ${token}`, // ✅ REQUIRED
+        },
+      });
+
+      const data = await res.json();
+
+      // ✅ SAFETY CHECK (prevents map errors)
+      if (Array.isArray(data)) {
+        setTransactions(data);
+      } else {
+        setTransactions([]);
+      }
+    } catch (err) {
+      console.error("Failed to fetch transactions", err);
+    }
   };
 
   return (
-    <div>
+    <div style={{ padding: "20px" }}>
       <h2>Transactions</h2>
 
       {transactions.length === 0 ? (
         <p>No transactions yet.</p>
       ) : (
-        <table border="1" cellPadding="10">
-          <thead>
-            <tr>
-              <th>Title</th>
-              <th>Amount (£)</th>
-              <th>Category</th>
-            </tr>
-          </thead>
-
-          <tbody>
-            {transactions.map((item) => (
-              <tr key={item._id}>
-                <td>{item.title}</td>
-                <td>{item.amount}</td>
-                <td>{item.category || "Auto"}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <ul>
+          {transactions.map((t) => (
+            <li key={t._id}>
+              {t.title} — £{t.amount} ({t.category})
+            </li>
+          ))}
+        </ul>
       )}
     </div>
   );
