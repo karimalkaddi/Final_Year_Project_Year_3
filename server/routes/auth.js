@@ -2,15 +2,20 @@ import express from "express";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import User from "../models/User.js";
+import auth from "../middleware/auth.js";
 
 const router = express.Router();
 
-/**
- * REGISTER
- */
+/* =========================
+   REGISTER
+========================= */
 router.post("/register", async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    const { email, password, name } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({ message: "Email and password required" });
+    }
 
     const existingUser = await User.findOne({ email });
     if (existingUser) {
@@ -20,25 +25,43 @@ router.post("/register", async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const user = new User({
-      name,
       email,
       password: hashedPassword,
+      name: name || "",
     });
 
     await user.save();
 
-    res.status(201).json({ message: "User registered successfully" });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
+    const token = jwt.sign(
+      { id: user._id },
+      process.env.JWT_SECRET,
+      { expiresIn: "7d" }
+    );
+
+    res.status(201).json({
+      token,
+      user: {
+        id: user._id,
+        email: user.email,
+        name: user.name,
+      },
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
   }
 });
 
-/**
- * LOGIN
- */
+/* =========================
+   LOGIN
+========================= */
 router.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({ message: "Email and password required" });
+    }
 
     const user = await User.findOne({ email });
     if (!user) {
@@ -51,7 +74,7 @@ router.post("/login", async (req, res) => {
     }
 
     const token = jwt.sign(
-      { id: user._id }, // ✅ THIS IS IMPORTANT
+      { id: user._id },
       process.env.JWT_SECRET,
       { expiresIn: "7d" }
     );
@@ -60,12 +83,34 @@ router.post("/login", async (req, res) => {
       token,
       user: {
         id: user._id,
-        name: user.name,
         email: user.email,
+        name: user.name,
       },
     });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+/* =========================
+   GET LOGGED-IN USER
+   (Used for Welcome message & Profile page)
+========================= */
+router.get("/me", auth, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).select(
+      "email name"
+    );
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.json(user);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
   }
 });
 

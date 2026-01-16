@@ -14,56 +14,59 @@ import {
 function Dashboard() {
   const [expenses, setExpenses] = useState([]);
   const [prediction, setPrediction] = useState(null);
+  const [alert, setAlert] = useState(null);
+  const [user, setUser] = useState(null);
 
   const token = localStorage.getItem("token");
 
-  useEffect(() => {
-    // ✅ CLEAR OLD USER DATA FIRST
-    setExpenses([]);
-    setPrediction(null);
+  const authHeader = {
+    Authorization: `Bearer ${token}`,
+  };
 
+  useEffect(() => {
+    fetchUser();
     fetchExpenses();
     fetchPrediction();
-  }, [token]); // 👈 reruns when user changes
+    fetchAlert();
+  }, []);
 
   // --------------------
-  // Fetch expenses
+  // Fetch logged-in user
   // --------------------
+  const fetchUser = async () => {
+    const res = await fetch("http://localhost:5000/api/auth/me", {
+      headers: authHeader,
+    });
+    const data = await res.json();
+    setUser(data);
+  };
+
   const fetchExpenses = async () => {
-    try {
-      const res = await fetch("http://localhost:5000/api/expenses", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      const data = await res.json();
-      setExpenses(Array.isArray(data) ? data : []);
-    } catch (err) {
-      console.error("Failed to fetch expenses", err);
-    }
+    const res = await fetch("http://localhost:5000/api/expenses", {
+      headers: authHeader,
+    });
+    const data = await res.json();
+    setExpenses(Array.isArray(data) ? data : []);
   };
 
-  // --------------------
-  // Fetch prediction
-  // --------------------
   const fetchPrediction = async () => {
-    try {
-      const res = await fetch("http://localhost:5000/api/predictions", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+    const res = await fetch("http://localhost:5000/api/predictions", {
+      headers: authHeader,
+    });
+    const data = await res.json();
+    setPrediction(data);
+  };
 
-      const data = await res.json();
-      setPrediction(data);
-    } catch (err) {
-      console.error("Failed to fetch prediction", err);
-    }
+  const fetchAlert = async () => {
+    const res = await fetch("http://localhost:5000/api/alerts", {
+      headers: authHeader,
+    });
+    const data = await res.json();
+    setAlert(data);
   };
 
   // --------------------
-  // Category totals
+  // Charts
   // --------------------
   const categoryTotals = {};
   expenses.forEach((e) => {
@@ -76,48 +79,45 @@ function Dashboard() {
     amount: categoryTotals[cat],
   }));
 
-  // --------------------
-  // Forecast chart data
-  // --------------------
   const forecastData =
     prediction &&
     [
-      ...prediction.history.map((v, i) => ({
+      ...(prediction.history || []).map((v, i) => ({
         day: `Past ${prediction.history.length - i}`,
         amount: v,
       })),
-      ...prediction.prediction.map((v, i) => ({
+      ...(prediction.prediction || []).map((v, i) => ({
         day: `Day ${i + 1}`,
         amount: v,
       })),
     ];
 
+  const username =
+    user?.email ? user.email.split("@")[0] : "User";
+
   return (
     <div style={{ padding: "20px" }}>
-      <h1>Dashboard</h1>
+      <h1>Welcome, {username} 👋</h1>
 
-      {/* BAR CHART */}
-      <h2>Spending by Category</h2>
-      {barData.length === 0 ? (
-        <p>No expenses recorded yet.</p>
-      ) : (
-        <ResponsiveContainer width="100%" height={300}>
-          <BarChart data={barData}>
-            <XAxis dataKey="category" />
-            <YAxis />
-            <Tooltip />
-            <Bar dataKey="amount" />
-          </BarChart>
-        </ResponsiveContainer>
+      {alert?.overspending && (
+        <div style={{ background: "#ffe5e5", padding: "15px", borderRadius: "8px" }}>
+          ⚠️ <strong>Overspending Alert</strong>
+        </div>
       )}
 
-      {/* LINE CHART */}
-      {prediction && (
-        <>
-          <h2 style={{ marginTop: "40px" }}>
-            Spending Forecast (Next 7 Days)
-          </h2>
+      <h2>Spending by Category</h2>
+      <ResponsiveContainer width="100%" height={300}>
+        <BarChart data={barData}>
+          <XAxis dataKey="category" />
+          <YAxis />
+          <Tooltip />
+          <Bar dataKey="amount" />
+        </BarChart>
+      </ResponsiveContainer>
 
+      {forecastData && (
+        <>
+          <h2 style={{ marginTop: "40px" }}>Spending Forecast</h2>
           <ResponsiveContainer width="100%" height={300}>
             <LineChart data={forecastData}>
               <CartesianGrid strokeDasharray="3 3" />

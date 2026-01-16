@@ -5,18 +5,26 @@ import express from "express";
 import mongoose from "mongoose";
 import cors from "cors";
 
-// Routes
+/* =========================
+   Route imports
+========================= */
 import authRoutes from "./routes/auth.js";
 import expenseRoutes from "./routes/expenses.js";
 import predictionRoutes from "./routes/predictions.js";
+import alertRoutes from "./routes/alerts.js";
 
-// ✅ AUTH MIDDLEWARE (your file name)
+/* =========================
+   Middleware imports
+========================= */
 import authMiddleware from "./middleware/auth.js";
 
+/* =========================
+   App init
+========================= */
 const app = express();
 
 /* =========================
-   Middleware
+   Global middleware
 ========================= */
 app.use(cors());
 app.use(express.json());
@@ -25,12 +33,13 @@ app.use(express.json());
    Routes
 ========================= */
 
-// Auth routes (login / register)
+// Public routes
 app.use("/api/auth", authRoutes);
 
-// Protected routes
+// Protected routes (JWT required)
 app.use("/api/expenses", authMiddleware, expenseRoutes);
 app.use("/api/predictions", authMiddleware, predictionRoutes);
+app.use("/api/alerts", authMiddleware, alertRoutes);
 
 /* =========================
    Database
