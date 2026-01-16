@@ -9,7 +9,10 @@ import {
   LineChart,
   Line,
   CartesianGrid,
-  Cell
+  Cell,
+  PieChart,
+  Pie,
+  Legend
 } from "recharts";
 
 function Dashboard() {
@@ -31,7 +34,6 @@ function Dashboard() {
     fetchAlert();
   }, []);
 
-  // Fetch logic remains identical...
   const fetchUser = async () => {
     const res = await fetch("http://localhost:5000/api/auth/me", { headers: authHeader });
     const data = await res.json();
@@ -57,10 +59,13 @@ function Dashboard() {
   expenses.forEach((e) => {
     categoryTotals[e.category] = (categoryTotals[e.category] || 0) + e.amount;
   });
+  
   const barData = Object.keys(categoryTotals).map((cat) => ({
+    name: cat, 
     category: cat,
     amount: categoryTotals[cat],
   }));
+
   const forecastData = prediction && [
     ...(prediction.history || []).map((v, i) => ({ day: `Past ${prediction.history.length - i}`, amount: v })),
     ...(prediction.prediction || []).map((v, i) => ({ day: `Day ${i + 1}`, amount: v })),
@@ -68,7 +73,8 @@ function Dashboard() {
 
   const username = user?.name || user?.email?.split("@")[0] || "User";
 
-  // --- UI STYLES ---
+  const COLORS = ["#38bdf8", "#818cf8", "#c084fc", "#fb7185", "#34d399"];
+
   const styles = {
     container: {
       backgroundColor: "#0f172a", 
@@ -109,16 +115,23 @@ function Dashboard() {
       alignItems: "center",
       gap: "10px",
     },
+    grid: {
+      display: "grid",
+      gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
+      gap: "25px",
+      marginBottom: "25px",
+    },
     card: {
       background: "rgba(30, 41, 59, 0.5)",
       backdropFilter: "blur(12px)",
       border: "1px solid rgba(255, 255, 255, 0.1)",
       borderRadius: "24px",
       padding: "30px",
-      marginBottom: "30px",
+      display: "flex",
+      flexDirection: "column",
     },
     sectionTitle: {
-      fontSize: "1rem",
+      fontSize: "0.9rem",
       color: "#64748b",
       marginBottom: "25px",
       textTransform: "uppercase",
@@ -128,7 +141,6 @@ function Dashboard() {
 
   return (
     <div style={styles.container}>
-      {/* CSS for the Waving Animation */}
       <style>
         {`
           @keyframes wave-animation {
@@ -159,25 +171,59 @@ function Dashboard() {
         </div>
       )}
 
-      {/* Charts section remains same as previous clean version */}
-      <div style={styles.card}>
-        <h2 style={styles.sectionTitle}>Spending Categories</h2>
-        <ResponsiveContainer width="100%" height={300}>
-          <BarChart data={barData}>
-            <XAxis dataKey="category" stroke="#475569" tick={{ fill: '#475569', fontSize: 12 }} axisLine={false} tickLine={false} />
-            <YAxis stroke="#475569" tick={{ fill: '#475569', fontSize: 12 }} axisLine={false} tickLine={false} />
-            <Tooltip 
-              cursor={{fill: 'rgba(255,255,255,0.05)'}}
-              contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #38bdf8', borderRadius: '12px' }}
-              itemStyle={{ color: '#38bdf8' }}
-            />
-            <Bar dataKey="amount" radius={[6, 6, 0, 0]}>
-              {barData.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={index % 2 === 0 ? "#38bdf8" : "#6366f1"} />
-              ))}
-            </Bar>
-          </BarChart>
-        </ResponsiveContainer>
+      <div style={styles.grid}>
+        <div style={styles.card}>
+          <h2 style={styles.sectionTitle}>Expense Breakdown</h2>
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={barData}>
+              <XAxis dataKey="category" stroke="#475569" tick={{ fill: '#475569', fontSize: 11 }} axisLine={false} tickLine={false} />
+              <YAxis stroke="#475569" tick={{ fill: '#475569', fontSize: 11 }} axisLine={false} tickLine={false} />
+              <Tooltip 
+                cursor={{fill: 'rgba(255,255,255,0.05)'}}
+                contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #38bdf8', borderRadius: '12px' }}
+                itemStyle={{ color: '#38bdf8' }}
+              />
+              <Bar dataKey="amount" radius={[6, 6, 0, 0]}>
+                {barData.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+
+        <div style={styles.card}>
+          <h2 style={styles.sectionTitle}>Spending Share</h2>
+          <ResponsiveContainer width="100%" height={300}>
+            <PieChart>
+              <Pie
+                data={barData}
+                dataKey="amount"
+                nameKey="category"
+                cx="50%"
+                cy="50%"
+                innerRadius={60} 
+                outerRadius={80}
+                paddingAngle={5}
+                stroke="none"
+              >
+                {barData.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                ))}
+              </Pie>
+              <Tooltip 
+                contentStyle={{ 
+                  backgroundColor: '#1e293b', 
+                  border: '1px solid #38bdf8', 
+                  borderRadius: '12px' 
+                }}
+                itemStyle={{ color: '#ffffff' }} // Changed to white
+                labelStyle={{ color: '#ffffff' }} // Changed to white
+              />
+              <Legend verticalAlign="bottom" height={36} iconType="circle" wrapperStyle={{ color: '#94a3b8' }}/>
+            </PieChart>
+          </ResponsiveContainer>
+        </div>
       </div>
 
       {forecastData && (
