@@ -5,6 +5,7 @@ import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 import AddExpense from "./pages/AddExpense";
 import Transactions from "./pages/Transactions";
+import Profile from "./pages/Profile"; // ✅ NEW
 
 import ProtectedRoute from "./components/ProtectedRoute";
 import Layout from "./components/Layout";
@@ -13,11 +14,11 @@ function App() {
   return (
     <Router>
       <Routes>
-        {/* Public routes */}
+        {/* ================= Public routes ================= */}
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
 
-        {/* Protected routes WITH NAVBAR */}
+        {/* ================= Protected routes (with Navbar) ================= */}
         <Route
           path="/dashboard"
           element={
@@ -51,7 +52,19 @@ function App() {
           }
         />
 
-        {/* Default */}
+        {/* ✅ Profile page */}
+        <Route
+          path="/profile"
+          element={
+            <ProtectedRoute>
+              <Layout>
+                <Profile />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+
+        {/* ================= Default ================= */}
         <Route path="*" element={<Navigate to="/login" />} />
       </Routes>
     </Router>

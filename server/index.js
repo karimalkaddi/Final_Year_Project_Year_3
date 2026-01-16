@@ -12,6 +12,7 @@ import authRoutes from "./routes/auth.js";
 import expenseRoutes from "./routes/expenses.js";
 import predictionRoutes from "./routes/predictions.js";
 import alertRoutes from "./routes/alerts.js";
+import profileRoutes from "./routes/profile.js";
 
 /* =========================
    Middleware imports
@@ -40,6 +41,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/expenses", authMiddleware, expenseRoutes);
 app.use("/api/predictions", authMiddleware, predictionRoutes);
 app.use("/api/alerts", authMiddleware, alertRoutes);
+app.use("/api/profile", authMiddleware, profileRoutes);
 
 /* =========================
    Database

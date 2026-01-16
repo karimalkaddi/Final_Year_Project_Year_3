@@ -93,7 +93,12 @@ function Dashboard() {
     ];
 
   const username =
-    user?.email ? user.email.split("@")[0] : "User";
+  user?.name && user.name.trim() !== ""
+    ? user.name
+    : user?.email
+    ? user.email.split("@")[0]
+    : "User";
+
 
   return (
     <div style={{ padding: "20px" }}>
